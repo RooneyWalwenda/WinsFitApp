@@ -7,8 +7,9 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 
+
+
 @SpringBootApplication
-@ComponentScan(basePackages = {"appointment"})
 @EnableJpaRepositories("appointment")
 public class AppointmentBookingApplication {
 
@@ -23,4 +24,5 @@ public class AppointmentBookingApplication {
         registrationBean.addUrlPatterns("/api/users/*", "/api/appointments/*"); // Include all relevant endpoints
         return registrationBean;
     }
+   
 }

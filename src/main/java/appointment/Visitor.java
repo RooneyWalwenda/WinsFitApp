@@ -1,6 +1,8 @@
 package appointment;
 
 import jakarta.persistence.*;
+import jakarta.validation.constraints.Email;
+import jakarta.validation.constraints.NotNull;
 
 import java.sql.Date;
 
@@ -13,14 +15,27 @@ public class Visitor {
     private int visitorid;
     private String visitorname;
     private String company;
+    @NotNull(message = "Email cannot be null")
+    @Email(message = "Email should be valid")
     private String email;
     private String phone_number;
     private Date checkin_time;
     private Date checkout_time;
     private String visit_status;
+    @NotNull(message = "Password cannot be null")
+    
     private String password;
+    private boolean isDefaultPassword;
 
-    // Getters and Setters
+    public boolean isDefaultPassword() {
+		return isDefaultPassword;
+	}
+
+	public void setDefaultPassword(boolean isDefaultPassword) {
+		this.isDefaultPassword = isDefaultPassword;
+	}
+
+	// Getters and Setters
     public int getVisitorid() {
         return visitorid;
     }

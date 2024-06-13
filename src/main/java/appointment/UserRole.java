@@ -1,6 +1,6 @@
 package appointment;
 
 public enum UserRole {
-    ADMIN,
-    RECEPTIONIST
+	SUPERADMIN,
+    RECEPTIONIST, INSTITUTION_ADMIN, ADMIN
 }

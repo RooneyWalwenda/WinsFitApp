@@ -1,13 +1,21 @@
 package appointment;
 
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Service;
-
 import java.util.List;
 import java.util.Optional;
 
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+
+import jakarta.mail.MessagingException;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+
 @Service
 public class VisitorNotificationsService {
+	
+	 private static final Logger logger = LoggerFactory.getLogger(VisitorNotificationsService.class);
 
     @Autowired
     private VisitorNotificationsRepository visitorNotificationsRepository;
@@ -15,8 +23,7 @@ public class VisitorNotificationsService {
     @Autowired
     private VisitorRepository visitorRepository;
 
-    @Autowired
-    private SmsService smsService;
+    
 
     @Autowired
     private EmailService emailService;
@@ -79,15 +86,19 @@ public class VisitorNotificationsService {
         Visitor visitor = notification.getVisitor();
         String content = notification.getNotification_content();
 
-        switch (notification.getNotification_type()) {
-            case "SMS":
-                smsService.sendSms(visitor.getPhone_number(), content);
-                break;
-            case "EMAIL":
-                emailService.sendEmail(visitor.getEmail(), "Notification", content);
-                break;
-            default:
-                throw new IllegalArgumentException("Unsupported notification type: " + notification.getNotification_type());
+        // Check if the notification type is EMAIL
+        if ("EMAIL".equals(notification.getNotification_type())) {
+            try {
+                emailService.sendHtmlEmail(visitor.getEmail(), "Notification", content);
+            } catch (MessagingException e) {
+                logger.error("Failed to send notification email to: {}", visitor.getEmail(), e);
+            }
+        } else {
+            throw new IllegalArgumentException("Unsupported notification type: " + notification.getNotification_type());
         }
     }
+
+
+
+
 }

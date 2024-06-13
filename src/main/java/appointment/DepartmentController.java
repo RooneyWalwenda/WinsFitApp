@@ -1,5 +1,7 @@
 package appointment;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -7,31 +9,33 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/department")
+@RequestMapping("/api/departments")
 public class DepartmentController {
 
     @Autowired
     private DepartmentService departmentService;
 
     @Autowired
-    private AppointmentService appointmentService;
-
-    @Autowired
     private DepartmentRepository departmentRepository;
+    
+    private static final Logger logger = LoggerFactory.getLogger(DepartmentController.class);
 
-    @GetMapping
-    public List<Appointment> getAllAppointments() {
-        return appointmentService.getAllAppointments();
+    @GetMapping("/institution/{institutionId}")
+    public ResponseEntity<List<Department>> getDepartmentsByInstitutionId1(@PathVariable Long institutionId) {
+        List<Department> departments = departmentService.getDepartmentsByInstitutionId(institutionId);
+        logger.info("Successfully retrieved departments for Institution ID {}: {}", institutionId, departments);
+        return ResponseEntity.ok(departments);
     }
 
-    @GetMapping("/departments")
+    @GetMapping
     public List<Department> getAllDepartments() {
         return departmentRepository.findAll();
     }
 
     @PostMapping
-    public Department createDepartment(@RequestBody Department department) {
-        return departmentService.createDepartment(department);
+    public ResponseEntity<Department> createDepartment(@RequestBody Department department, @RequestParam Long institutionId) {
+        Department createdDepartment = departmentService.createDepartment(department, institutionId);
+        return ResponseEntity.ok(createdDepartment);                                                                                                                                                                                                                                                                                                                                                                                                                                
     }
 
     @PutMapping("/{id}")
@@ -48,4 +52,6 @@ public class DepartmentController {
         departmentService.deleteDepartment(id);
         return ResponseEntity.noContent().build();
     }
+    
+    
 }

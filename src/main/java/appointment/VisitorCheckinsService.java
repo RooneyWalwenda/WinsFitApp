@@ -3,7 +3,6 @@ package appointment;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import java.util.List;
 import java.util.Optional;
 
 @Service
@@ -11,13 +10,6 @@ public class VisitorCheckinsService {
 
     @Autowired
     private VisitorCheckinsRepository visitorCheckinsRepository;
-
-    @Autowired
-    private VisitorRepository visitorRepository;
-
-    public List<VisitorCheckins> getAllVisitorCheckins() {
-        return visitorCheckinsRepository.findAll();
-    }
 
     public VisitorCheckins getVisitorCheckinById(int id) {
         Optional<VisitorCheckins> optionalVisitorCheckins = visitorCheckinsRepository.findById(id);

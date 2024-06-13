@@ -1,5 +1,17 @@
-{"properties": [{
-  "name": "twilio.phone.number",
-  "type": "java.lang.String",
-  "description": "A description for 'twilio.phone.number'"
-}]}
+{"properties": [
+  {
+    "name": "twilio.phone.number",
+    "type": "java.lang.String",
+    "description": "A description for 'twilio.phone.number'"
+  },
+  {
+    "name": "server.additional-ports",
+    "type": "java.lang.String",
+    "description": "A description for 'server.additional-ports'"
+  },
+  {
+    "name": "//spring.datasource.url",
+    "type": "java.lang.String",
+    "description": "A description for '//spring.datasource.url'"
+  }
+]}

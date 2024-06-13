@@ -1,24 +1,38 @@
 package appointment;
 
-import io.swagger.annotations.Api;
-import io.swagger.annotations.ApiOperation;
-import io.swagger.annotations.ApiParam;
+import java.sql.Date;
+import java.util.List;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.validation.annotation.Validated;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
-import java.sql.Date;
-import java.util.List;
+import io.swagger.annotations.Api;
+import io.swagger.annotations.ApiOperation;
+import io.swagger.annotations.ApiParam;
+import jakarta.validation.Valid;
 
 @Api(value = "Visitor Management System")
 @RestController
 @RequestMapping("/api/visitors")
+@Validated
 public class VisitorControllerClass {
 
+    private static final Logger logger = LoggerFactory.getLogger(VisitorControllerClass.class);
+    //@Autowired
+   // private Validator validator; // Injecting the Validator bean
     @Autowired
     private VisitorService visitorService;
-
     @ApiOperation(value = "View a list of visitors", response = List.class)
     @GetMapping
     public List<Visitor> getAllVisitors() {
@@ -35,24 +49,35 @@ public class VisitorControllerClass {
 
     @ApiOperation(value = "Create a new visitor")
     @PostMapping
-    public Visitor createVisitor(
+    public ResponseEntity<?> createVisitor(
             @ApiParam(value = "Visitor object to store in database table", required = true)
-            @RequestBody Visitor visitor) throws Exception {
-        return visitorService.createVisitor(visitor);
+            @Valid @RequestBody Visitor visitor) {
+
+        try {
+            Visitor createdVisitor = visitorService.createVisitor(visitor);
+            logger.info("Created visitor with email: {}", createdVisitor.getEmail());
+            return ResponseEntity.status(HttpStatus.CREATED).body(createdVisitor);
+        } catch (IllegalArgumentException e) {
+            // Handle validation or password criteria failure
+            logger.error("Error creating visitor", e);
+            return ResponseEntity.badRequest().body(new ResponseModel("Validation error", "VALIDATION_ERROR", e.getMessage()));
+        } catch (Exception e) {
+            logger.error("Error creating visitor", e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new ResponseModel("Failed to create visitor", "SERVER_ERROR"));
+        }
     }
+
+
 
     @ApiOperation(value = "Login visitor")
     @PostMapping("/login")
-    public ResponseEntity<Visitor> loginVisitor(
+    public ResponseEntity<?> loginVisitor(
             @ApiParam(value = "Login request object", required = true)
             @RequestBody LoginRequest loginRequest) {
-        Visitor visitor = visitorService.loginVisitor(loginRequest.getEmail(), loginRequest.getPassword());
-        if (visitor != null) {
-            return ResponseEntity.ok(visitor);
-        }
-        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        return visitorService.loginVisitor(loginRequest.getEmail(), loginRequest.getPassword());
     }
 
+    
     @ApiOperation(value = "Reset visitor password")
     @PostMapping("/resetPassword")
     public ResponseEntity<String> resetPassword(
@@ -67,19 +92,11 @@ public class VisitorControllerClass {
     @PostMapping("/changePassword")
     public ResponseEntity<String> changePassword(
             @ApiParam(value = "Change password request object", required = true)
-            @RequestBody ChangePasswordRequest changePasswordRequest) {
-        boolean isPasswordChanged = visitorService.changePassword(
-                changePasswordRequest.getEmail(),
-                changePasswordRequest.getOldPassword(),
-                changePasswordRequest.getNewPassword()
-        );
+            @Valid @RequestBody ChangePasswordRequest changePasswordRequest) {
 
-        if (isPasswordChanged) {
-            return ResponseEntity.ok("Password changed successfully.");
-        } else {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Password change failed.");
-        }
+        return visitorService.changePassword(changePasswordRequest);
     }
+
 
     @ApiOperation(value = "Check in a visitor")
     @PutMapping("/{id}/checkin")

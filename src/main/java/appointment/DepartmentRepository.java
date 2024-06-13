@@ -3,12 +3,9 @@ package appointment;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
+import java.util.List;
+
 @Repository
 public interface DepartmentRepository extends JpaRepository<Department, Integer> {
+    List<Department> findByInstitutionId(Long institutionId);
 }
-
-
-/*@Repository
-public interface DepartmentRepository extends JpaRepository<Department, Integer> {
-    // Add custom query methods if needed
-}*/

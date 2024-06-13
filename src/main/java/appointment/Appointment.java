@@ -1,9 +1,17 @@
 package appointment;
 
-import jakarta.persistence.*;
-import java.sql.Date;
 import java.sql.Time;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
+
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.Table;
 
 @Entity
 @Table(name = "appointment")
@@ -17,18 +25,31 @@ public class Appointment {
     @JoinColumn(name = "visitorid")
     private Visitor visitor;
 
-    private Date date;
-    private Time time;
+    @ManyToOne
+    @JoinColumn(name = "institutionid")
+    private Institution institution;
+
+    private LocalDate date; // Use LocalDate for date handling
+    private Time time; // Use Time or LocalDateTime for time handling
+
     private String appointmentstatus;
     private String department;
-   
+
     @Column(name = "passcode", unique = true)
     private String passcode;
 
     @Column(name = "cancellation_date")
-    private LocalDateTime cancellationDate; // New field
+    private LocalDateTime cancellationDate;
+
+    @Column(name = "check_in_time")
+    private LocalDateTime checkInTime;
+
+    @Column(name = "check_out_time")
+    private LocalDateTime checkOutTime;
 
     // Getters and Setters
+    // Include constructors as needed
+
     public int getAppointmentid() {
         return appointmentid;
     }
@@ -45,11 +66,19 @@ public class Appointment {
         this.visitor = visitor;
     }
 
-    public Date getDate() {
+    public Institution getInstitution() {
+        return institution;
+    }
+
+    public void setInstitution(Institution institution) {
+        this.institution = institution;
+    }
+
+    public LocalDate getDate() {
         return date;
     }
 
-    public void setDate(Date date) {
+    public void setDate(LocalDate date) {
         this.date = date;
     }
 
@@ -91,5 +120,21 @@ public class Appointment {
 
     public void setCancellationDate(LocalDateTime cancellationDate) {
         this.cancellationDate = cancellationDate;
+    }
+
+    public LocalDateTime getCheckInTime() {
+        return checkInTime;
+    }
+
+    public void setCheckInTime(LocalDateTime checkInTime) {
+        this.checkInTime = checkInTime;
+    }
+
+    public LocalDateTime getCheckOutTime() {
+        return checkOutTime;
+    }
+
+    public void setCheckOutTime(LocalDateTime checkOutTime) {
+        this.checkOutTime = checkOutTime;
     }
 }
