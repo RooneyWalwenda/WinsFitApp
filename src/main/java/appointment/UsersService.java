@@ -87,7 +87,7 @@ public class UsersService {
         user.setPassword(passwordEncoder.encode(user.getPassword()));
         
         // Check the role of the user being created and handle accordingly
-        if (user.getRole() == UserRole.INSTITUTION_ADMIN || user.getRole() == UserRole.RECEPTIONIST) {
+        if (user.getRole() == UserRole.INSTITUTION_ADMIN || user.getRole() == UserRole.PHYSIOTHERAPIST) {
             return usersRepository.save(user);
         } else {
             throw new IllegalArgumentException("Invalid role specified for user creation.");
@@ -165,32 +165,47 @@ public class UsersService {
         logger.info("Retrieved {} users for institution with ID {}", users.size(), institutionId);
         return users;
     }
-   
-    public Users createReceptionist(Users user, Long institutionId) {
-        // Set the role to RECEPTIONIST
-        user.setRole(UserRole.RECEPTIONIST);
 
-        // Set the institutionId for the receptionist
+    public Users createPhysiotherapist(Users user, Long institutionId) {
+        logger.info("Starting physiotherapist creation for email: {}", user.getEmail());
+
+        // Validate user details
+        if (user.getPassword() == null || user.getPassword().isEmpty()) {
+            logger.error("Password is null or empty for user: {}", user.getEmail());
+            throw new IllegalArgumentException("Password cannot be null or empty.");
+        }
+        if (institutionId == null) {
+            logger.error("Institution ID is null for physiotherapist: {}", user.getEmail());
+            throw new IllegalArgumentException("Institution ID is required.");
+        }
+
+        // Set the role to PHYSIOTHERAPIST
+        user.setRole(UserRole.PHYSIOTHERAPIST);
+        logger.info("Assigned role 'PHYSIOTHERAPIST' to user: {}", user.getEmail());
+
+        // Set the institution ID for the physiotherapist
         user.setInstitutionId(institutionId);
 
         // Fetch institution name based on institutionId
         String institutionName = fetchInstitutionNameById(institutionId);
         user.setInstitutionName(institutionName);
+        logger.info("Assigned institution '{}' (ID: {}) to physiotherapist: {}", institutionName, institutionId, user.getEmail());
 
         // Encode the password
         user.setPassword(passwordEncoder.encode(user.getPassword()));
+        logger.info("Password successfully encoded for physiotherapist: {}", user.getEmail());
 
         try {
-            // Save the receptionist
+            // Save the physiotherapist
             Users savedUser = usersRepository.save(user);
-            logger.info("Created receptionist {} associated with institution {}", savedUser.getUsername(), institutionName);
+            logger.info("Successfully created physiotherapist '{}' associated with institution '{}'", savedUser.getUsername(), institutionName);
             return savedUser;
         } catch (Exception e) {
-            logger.error("Failed to create receptionist: {}", e.getMessage());
-            throw new IllegalArgumentException("Failed to create receptionist");
+            logger.error("Failed to create physiotherapist '{}': {}", user.getEmail(), e.getMessage());
+            throw new IllegalArgumentException("Failed to create physiotherapist");
         }
     }
-    
+
     @Transactional
     public void initiatePasswordReset(String email) {
         logger.info("Initiating password reset for user with email: {}", email);

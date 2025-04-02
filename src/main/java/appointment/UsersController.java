@@ -61,13 +61,13 @@ public class UsersController {
 
 
 
-    @ApiOperation(value = "Create a new receptionist user")
-    @PostMapping("/receptionist")
+    @ApiOperation(value = "Create a new physiotherapist user")
+    @PostMapping("/physiotherapist")
     public ResponseEntity<Users> createReceptionist(
             @ApiParam(value = "User object to store in database table", required = true)
             @RequestBody Users user,
             @RequestParam(name = "institutionId") Long institutionId) { // Accept institutionId as a request parameter
-        Users newUser = usersService.createReceptionist(user, institutionId);
+        Users newUser = usersService.createPhysiotherapist(user, institutionId);
         return ResponseEntity.ok(newUser);
     }
 
@@ -115,14 +115,14 @@ public class UsersController {
     }
 
     @ApiOperation(value = "View a list of appointments", response = List.class)
-    @PreAuthorize("hasAnyRole('INSTITUTION_ADMIN', 'RECEPTIONIST')")
+    @PreAuthorize("hasAnyRole('INSTITUTION_ADMIN', 'PHYSIOTHERAPIST')")
     @GetMapping("/appointments")
     public List<Appointment> getAllAppointments() {
         return appointmentService.getAllAppointments();
     }
 
     @ApiOperation(value = "Get an appointment by Id")
-    @PreAuthorize("hasAnyRole('INSTITUTION_ADMIN', 'RECEPTIONIST')")
+    @PreAuthorize("hasAnyRole('INSTITUTION_ADMIN', 'PHYSIOTHERAPIST')")
     @GetMapping("/appointments/{id}")
     public ResponseEntity<Appointment> getAppointmentById(
             @ApiParam(value = "Appointment id from which appointment object will retrieve", required = true)

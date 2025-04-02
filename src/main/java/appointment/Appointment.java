@@ -6,6 +6,8 @@ import java.time.LocalDateTime;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
@@ -29,9 +31,13 @@ public class Appointment {
     @JoinColumn(name = "institutionid")
     private Institution institution;
 
-    private LocalDate date; // Use LocalDate for date handling
-    private Time time; // Use Time or LocalDateTime for time handling
 
+    @ManyToOne
+    @JoinColumn(name = "userid", nullable = false) // Stores the general user (admin, super admin, etc.)
+    private Users user;
+
+    private LocalDate date;
+    private Time time;
     private String appointmentstatus;
     private String department;
 
@@ -44,12 +50,44 @@ public class Appointment {
     @Column(name = "check_in_time")
     private LocalDateTime checkInTime;
 
+
     @Column(name = "check_out_time")
     private LocalDateTime checkOutTime;
 
-    // Getters and Setters
-    // Include constructors as needed
+    // New field to specify meeting type (VIRTUAL or PHYSICAL)
+    @Enumerated(EnumType.STRING)
+    @Column(name = "meeting_type", nullable = false)
+    private MeetingType meetingType = MeetingType.PHYSICAL;
 
+    // New field to store virtual meeting link
+    @Column(name = "video_meeting_link")
+    private String videoMeetingLink;
+
+    // Getters and Setters for new fields
+    public MeetingType getMeetingType() {
+        return meetingType;
+    }
+
+    public void setMeetingType(MeetingType meetingType) {
+        this.meetingType = meetingType;
+    }
+
+    public String getVideoMeetingLink() {
+        return videoMeetingLink;
+    }
+    // ✅ Add Getters and Setters
+    public Users getUser() {
+        return user;
+    }
+
+    public void setUser(Users user) {
+        this.user = user;
+    }
+    public void setVideoMeetingLink(String videoMeetingLink) {
+        this.videoMeetingLink = videoMeetingLink;
+    }
+
+    // Existing Getters and Setters
     public int getAppointmentid() {
         return appointmentid;
     }
@@ -57,6 +95,7 @@ public class Appointment {
     public void setAppointmentid(int appointmentid) {
         this.appointmentid = appointmentid;
     }
+
 
     public Visitor getVisitor() {
         return visitor;

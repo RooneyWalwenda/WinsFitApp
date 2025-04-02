@@ -2,6 +2,9 @@ package appointment;
 
 import jakarta.persistence.*;
 
+import java.util.ArrayList;
+import java.util.List;
+
 @Entity
 @Table(name = "users")
 public class Users {
@@ -32,6 +35,9 @@ public class Users {
     public void setInstitutionName(String institutionName) {
         this.institutionName = institutionName;
     }
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<Appointment> appointments = new ArrayList<>();
+
 
     // Constructor with email and role
     public Users(String email, UserRole role) {
@@ -57,7 +63,10 @@ public class Users {
     public void setUsername(String username) {
         this.username = username;
     }
-
+    // ✅ Add Getter Method for `id`
+    public int getId() {
+        return userid;
+    }
     public String getPassword() {
         return password;
     }

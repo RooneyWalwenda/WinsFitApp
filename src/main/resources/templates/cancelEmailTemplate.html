@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            color: #333;
+            margin: 0;
+            padding: 0;
+        }
+        h1 {
+            color: #333;
+        }
+        p {
+            margin: 0 0 10px;
+        }
+        strong {
+            color: #000;
+        }
+        .email-wrapper {
+            width: 100%;
+            padding: 20px;
+        }
+        .email-content {
+            position: relative;
+            background: url('https://giktek.io/wp-content/uploads/2022/08/Giktek-Logo-2.png') no-repeat left top;
+            background-size: 200px 100px;
+            padding: 40px;
+            background-color: #ffffff;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+        }
+        .email-content-inner {
+            background-color: rgba(254, 255, 255, 0.9);
+            padding: 20px;
+            border-radius: 10px;
+            position: relative;
+            z-index: 1;
+        }
+        .email-details {
+            background: linear-gradient(to right, #8a9de7, #82a8ee, #7192ff);
+            padding: 20px;
+            border-radius: 10px;
+            margin-top: 20px;
+        }
+        .overlay-image {
+            position: absolute;
+            top: 40px;
+            right: 20px;
+            width: 200px;
+            height: auto;
+            z-index: 0;
+            animation: floating 10s infinite alternate;
+            filter: hue-rotate(180deg);
+        }
+        @keyframes floating {
+            0% {
+                transform: translateY(0);
+            }
+            50% {
+                transform: translateY(-15px);
+            }
+            100% {
+                transform: translateY(0);
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="email-wrapper">
+        <div class="email-content">
+            <div class="email-content-inner">
+                <h1>Appointment Canceled</h1>
+                <div class="email-details">
+                    <p>Dear <span th:text="${visitorName}">Visitor Name</span>,</p>
+                    <p>Your appointment scheduled for <strong th:text="${date}">Date</strong> at <strong th:text="${time}">Time</strong> has been canceled successfully, feel free to book with us again!.</p>
+                    <p>Best regards,<br>GikTek Ventures Company</p>
+                </div>
+            </div>
+            <img src="https://giktek.io/wp-content/uploads/2023/10/Robot-II-2.png" class="overlay-image" alt="Robot Image">
+        </div>
+    </div>
+</body>
+</html>

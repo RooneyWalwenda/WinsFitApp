@@ -2,6 +2,8 @@ package appointment;
 
 import java.sql.Date;
 import java.util.List;
+import java.util.Map;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -127,7 +129,14 @@ public class VisitorControllerClass {
         }
         return ResponseEntity.notFound().build();
     }
-
+    @ApiOperation(value = "Fetch Welcome Section for a Visitor")
+    @GetMapping("/{id}/welcome")
+    public ResponseEntity<Map<String, String>> getWelcomeSection(
+            @ApiParam(value = "Visitor ID for fetching welcome section", required = true)
+            @PathVariable int id) {
+        logger.info("Fetching welcome section for visitor ID: {}", id);
+        return ResponseEntity.ok(visitorService.getWelcomeDetails(id));
+    }
     @ApiOperation(value = "Delete a visitor")
     @DeleteMapping("/{id}")
     public void deleteVisitor(

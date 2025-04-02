@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Upcoming Appointment Reminder</title>
+</head>
+<body>
+<h2>Hello,</h2>
+<p>This is a reminder for your upcoming virtual appointment.</p>
+
+<p><strong>Date:</strong> <span th:text="${date}"></span></p>
+<p><strong>Time:</strong> <span th:text="${time}"></span></p>
+
+<p><strong>Meeting Link:</strong>
+  <a th:href="${meetingLink}" target="_blank">
+    Click here to join the meeting
+  </a>
+</p>
+
+<p>Thank you!</p>
+</body>
+</html>

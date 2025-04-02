@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            color: #333;
+            margin: 0;
+            padding: 0;
+        }
+        h1 {
+            color: #333;
+        }
+        p {
+            margin: 0 0 10px;
+        }
+        strong {
+            color: #000;
+        }
+        .email-wrapper {
+            width: 100%;
+            padding: 20px;
+        }
+        .email-content {
+            position: relative;
+            background: url('https://giktek.io/wp-content/uploads/2022/08/Giktek-Logo-2.png') no-repeat left top; /* Move initial image slightly to the left */
+            background-size: 200px 100px; /* Adjust size as needed */
+            padding: 40px;
+            background-color: #ffffff;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            overflow: hidden; /* Ensure content doesn't overflow */
+        }
+        .email-content-inner {
+            background-color: rgba(254, 255, 255, 0.9); /* semi-transparent white background for text readability */
+            padding: 20px;
+            border-radius: 10px;
+            position: relative;
+            z-index: 1;
+        }
+        .email-details {
+            background: linear-gradient(to right, #8a9de7, #82a8ee, #7192ff); /* Apply gradient to the email details section */
+            padding: 20px;
+            border-radius: 10px;
+            margin-top: 20px;
+        }
+        .overlay-image {
+            position: absolute;
+            top: 40px; /* Align to the top of the email content */
+            right: 20px; /* Align to the right */
+            width: 200px; /* Adjust width as needed */
+            height: auto;
+            z-index: 0; /* Ensure it appears behind the text */
+            animation: floating 10s infinite alternate; /* Animation properties with 10s duration */
+            filter: hue-rotate(180deg); /* Apply hue rotation to make the image blue */
+        }
+        @keyframes floating {
+            0% {
+                transform: translateY(0);
+            }
+            50% {
+                transform: translateY(-15px); /* Move up */
+            }
+            100% {
+                transform: translateY(0);
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="email-wrapper">
+        <div class="email-content">
+            <div class="email-content-inner">
+                <h1>Thank You for Attending Your Appointment</h1>
+                <div class="email-details">
+                    <p>Dear <span th:text="${visitorName}">Visitor</span>,</p>
+                    <p>Thank you for attending your appointment scheduled for:</p>
+                    <p>Date: <strong th:text="${date}">DATE</strong></p>
+                    <p>Time: <strong th:text="${time}">TIME</strong></p>
+                    <p>Department: <strong th:text="${department}">DEPARTMENT</strong></p>
+                    <p>Welcome back for the best experience!</p>
+                    <p>Best regards,<br>GikTek Ventures Company</p>
+                </div>
+            </div>
+            <img src="https://giktek.io/wp-content/uploads/2023/10/Robot-II-2.png" class="overlay-image" alt="Robot Image">
+        </div>
+    </div>
+</body>
+</html>

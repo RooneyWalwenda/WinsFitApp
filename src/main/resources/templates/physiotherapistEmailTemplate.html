@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Virtual Appointment Assigned</title>
+</head>
+<body>
+<h2>Hello, <span th:text="${physiotherapistName}"></span></h2>
+<p>You have been assigned a virtual appointment.</p>
+
+<p><strong>Visitor:</strong> <span th:text="${visitorName}"></span></p>
+<p><strong>Date:</strong> <span th:text="${date}"></span></p>
+<p><strong>Time:</strong> <span th:text="${time}"></span></p>
+
+<p><strong>Meeting Link:</strong>
+    <a th:href="${meetingLink}" target="_blank">
+        Click here to start the meeting
+    </a>
+</p>
+
+<p>Please ensure the visitor is granted access to the meeting.</p>
+<p>Best Regards, WinsFit Team!</p>
+</body>
+</html>

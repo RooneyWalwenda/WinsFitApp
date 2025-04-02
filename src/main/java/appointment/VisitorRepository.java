@@ -15,4 +15,5 @@ public interface VisitorRepository extends JpaRepository<Visitor, Integer> {
     @Modifying
     @Query("UPDATE Visitor v SET v.password = :password WHERE v.email = :email")
     void updatePasswordByEmail(String email, String password);
+    Optional<Visitor> findById(Integer id);
 }

@@ -1,6 +1,8 @@
 package appointment;
 
-import java.util.List;	
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 import org.apache.commons.lang3.RandomStringUtils;
@@ -29,8 +31,6 @@ public class VisitorService {
         this.emailService = emailService;
     }
 
-
-
     public List<Visitor> getAllVisitors() {
         logger.info("Fetching all visitors");
         return visitorRepository.findAll();
@@ -41,6 +41,7 @@ public class VisitorService {
         Optional<Visitor> optionalVisitor = visitorRepository.findById(id);
         return optionalVisitor.orElse(null);
     }
+
     public Visitor createVisitor(Visitor visitor) {
         logger.info("Creating new visitor with email: {}", visitor.getEmail());
 
@@ -58,7 +59,6 @@ public class VisitorService {
 
         return savedVisitor;
     }
-    
 
     public ResponseEntity<?> loginVisitor(String email, String password) {
         logger.info("Attempting to log in visitor with email: {}", email);
@@ -71,11 +71,9 @@ public class VisitorService {
                 logger.info("Login successful for visitor with email: {}", email);
 
                 if (visitor.isDefaultPassword()) {
-                    // Return a 200 OK response with a specific message
                     return ResponseEntity.ok().body(new ResponseModel("DEFAULT_PASSWORD", "You need to change your default password to a new unique password", visitor));
                 }
 
-                // Return visitor details in the response
                 return ResponseEntity.ok().body(new ResponseModel("200", "Request executed successfully", visitor));
             } else {
                 logger.warn("Password mismatch for visitor with email: {}", email);
@@ -86,11 +84,6 @@ public class VisitorService {
             return ResponseEntity.badRequest().body(new ResponseModel("400", "User does not exist"));
         }
     }
-    
-    
-    
-
-
 
     public void initiatePasswordReset(String email) {
         logger.info("Initiating password reset for visitor with email: {}", email);
@@ -99,7 +92,7 @@ public class VisitorService {
             Visitor visitor = optionalVisitor.get();
             String newPassword = generateRandomPassword();
             visitor.setPassword(passwordEncoder.encode(newPassword));
-            visitor.setDefaultPassword(true); // Set isDefaultPassword to true
+            visitor.setDefaultPassword(true);
             visitorRepository.save(visitor);
             emailService.sendPasswordResetEmail(visitor.getEmail(), visitor.getVisitorname(), newPassword);
             logger.info("Password reset initiated successfully for visitor with email: {}", email);
@@ -124,6 +117,8 @@ public class VisitorService {
             existingVisitor.setCheckin_time(newVisitor.getCheckin_time());
             existingVisitor.setCheckout_time(newVisitor.getCheckout_time());
             existingVisitor.setVisit_status(newVisitor.getVisit_status());
+            existingVisitor.setDepartment(newVisitor.getDepartment());
+
             return visitorRepository.save(existingVisitor);
         } else {
             logger.warn("Visitor with ID: {} not found", id);
@@ -135,9 +130,33 @@ public class VisitorService {
         logger.info("Deleting visitor with ID: {}", id);
         visitorRepository.deleteById(id);
     }
-    
+    public Map<String, String> getWelcomeDetails(int visitorId) {
+        Optional<Visitor> optionalVisitor = visitorRepository.findById(visitorId);
+
+        if (optionalVisitor.isEmpty()) {
+            throw new RuntimeException("Visitor not found");
+        }
+
+        Visitor visitor = optionalVisitor.get();
+
+        // Ensure proper initialization of HashMap
+        Map<String, String> response = new HashMap<>();
+
+        response.put("greetingMessage", "Good Morning, " + visitor.getVisitorname() + "! Let's crush your fitness goals today! 💪");
+        response.put("profilePicture", "https://example.com/profile.jpg"); // Placeholder image
+        response.put("name", visitor.getVisitorname());
+        response.put("age", String.valueOf(visitor.getDob())); // Convert Date to Age in frontend
+        response.put("gender", visitor.getGender());
+        response.put("fitnessGoal", visitor.getFitness_goal());
+        response.put("workoutStreak", "🔥 " + visitor.getWorkout_streak() + "-Day Streak! Keep Going!");
+        response.put("nextWorkout", visitor.getWorkout_type() != null && visitor.getWorkout_time() != null
+                ? "Next Workout: " + visitor.getWorkout_type() + " - Today at " + visitor.getWorkout_time()
+                : "No workout scheduled yet!");
+
+        return response;
+    }
+
     public ResponseEntity<String> changePassword(ChangePasswordRequest changePasswordRequest) {
-        // Proceed with password change
         String newPassword = changePasswordRequest.getNewPassword();
         boolean isPasswordChanged = changePassword(
                 changePasswordRequest.getEmail(),
@@ -159,7 +178,7 @@ public class VisitorService {
             Visitor visitor = optionalVisitor.get();
             if (passwordEncoder.matches(oldPassword, visitor.getPassword())) {
                 visitor.setPassword(passwordEncoder.encode(newPassword));
-                visitor.setDefaultPassword(false); // Reset isDefaultPassword to false
+                visitor.setDefaultPassword(false);
                 visitorRepository.save(visitor);
                 logger.info("Password changed successfully for visitor with email: {}", email);
                 return true;
@@ -167,9 +186,9 @@ public class VisitorService {
                 logger.warn("Old password mismatch for visitor with email: {}", email);
             }
         } else {
-                logger.warn("Visitor with email: {} not found", email);
+            logger.warn("Visitor with email: {} not found", email);
         }
         return false;
     }
-
 }
+

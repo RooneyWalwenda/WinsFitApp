@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            color: #333;
+            margin: 0;
+            padding: 0;
+        }
+        h1 {
+            color: #333;
+        }
+        p {
+            margin: 0 0 10px;
+        }
+        strong {
+            color: #000;
+        }
+        .email-wrapper {
+            width: 100%;
+            padding: 20px;
+        }
+        .email-content {
+            position: relative;
+            background: url('https://giktek.io/wp-content/uploads/2022/08/Giktek-Logo-2.png') no-repeat left top;
+            background-size: 200px 100px;
+            padding: 40px;
+            background-color: #ffffff;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+        }
+        .email-content-inner {
+            background-color: rgba(254, 255, 255, 0.9);
+            padding: 20px;
+            border-radius: 10px;
+            position: relative;
+            z-index: 1;
+        }
+        .email-details {
+            background: linear-gradient(to right, #8a9de7, #82a8ee, #7192ff);
+            padding: 20px;
+            border-radius: 10px;
+            margin-top: 20px;
+        }
+        .overlay-image {
+            position: absolute;
+            top: 40px;
+            right: 20px;
+            width: 200px;
+            height: auto;
+            z-index: 0;
+            animation: floating 10s infinite alternate;
+            filter: hue-rotate(180deg);
+        }
+        @keyframes floating {
+            0% {
+                transform: translateY(0);
+            }
+            50% {
+                transform: translateY(-15px);
+            }
+            100% {
+                transform: translateY(0);
+            }
+        }
+        .meeting-link {
+            background-color: #4CAF50;
+            color: white;
+            padding: 10px 15px;
+            text-align: center;
+            text-decoration: none;
+            display: inline-block;
+            border-radius: 5px;
+            font-size: 16px;
+        }
+    </style>
+</head>
+<body>
+<div class="email-wrapper">
+    <div class="email-content">
+        <div class="email-content-inner">
+            <h1>Appointment Booking Confirmation</h1>
+            <div class="email-details">
+                <p>Dear <span th:text="${visitorName}">Visitor</span>,</p>
+                <p>Your appointment has been successfully booked.</p>
+                <p>Details:</p>
+                <p>Appointment ID: <strong th:text="${appointmentId}">APPOINTMENT_ID</strong></p>
+                <p>Date: <strong th:text="${date}">DATE</strong></p>
+                <p>Time: <strong th:text="${time}">TIME</strong></p>
+                <p>Passcode: <strong th:text="${passcode}">PASSCODE</strong></p>
+                <p>Department: <strong th:text="${department}">DEPARTMENT</strong></p>
+                <p>Institution: <strong th:text="${institutionName}">INSTITUTION</strong></p>
+
+                <!-- Only display meeting link if it's a virtual appointment -->
+                <th:block th:if="${videoMeetingLink}">
+                    <p><strong>Meeting Link:</strong></p>
+                    <p><a th:href="${videoMeetingLink}" class="meeting-link">Join Virtual Meeting</a></p>
+                </th:block>
+
+                <p>You will need the Passcode and the Appointment ID on visit. <br> Best regards,<br>GikTek Ventures Company</p>
+            </div>
+        </div>
+        <img src="https://giktek.io/wp-content/uploads/2023/10/Robot-II-2.png" class="overlay-image" alt="Robot Image">
+    </div>
+</div>
+</body>
+</html>

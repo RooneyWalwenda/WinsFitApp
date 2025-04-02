@@ -51,10 +51,8 @@ public class AppointmentController {
 
     @Operation(summary = "Create a new appointment", description = "Create a new appointment in the system")
     @PostMapping
-    public ResponseEntity<Appointment> createAppointment(
-            @RequestBody Appointment appointment) {
+    public ResponseEntity<Appointment> createAppointment(@RequestBody Appointment appointment) {
         try {
-            // Validate institution existence
             Institution institution = institutionService.getInstitutionById(appointment.getInstitution().getId()).orElse(null);
             if (institution == null) {
                 logger.error("Invalid institution ID provided: {}", appointment.getInstitution().getId());
@@ -62,11 +60,17 @@ public class AppointmentController {
             }
             appointment.setInstitution(institution);
 
-            // Attempt to create the appointment
             Appointment createdAppointment = appointmentService.createAppointment(appointment);
             if (createdAppointment == null) {
                 return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
             }
+
+            // Log virtual meeting link if applicable
+            if (createdAppointment.getMeetingType() == MeetingType.VIRTUAL) {
+                logger.info("Virtual meeting link generated for appointment ID {}: {}",
+                        createdAppointment.getAppointmentid(), createdAppointment.getVideoMeetingLink());
+            }
+
             return ResponseEntity.status(HttpStatus.CREATED).body(createdAppointment);
         } catch (Exception e) {
             logger.error("Error creating appointment", e);
@@ -74,7 +78,7 @@ public class AppointmentController {
         }
     }
 
-    
+
     @GetMapping("/visitor/{visitorId}")
     public ResponseEntity<List<Appointment>> getAppointmentsByVisitorId(@PathVariable int visitorId) {
         List<Appointment> appointments = appointmentService.getAppointmentsByVisitorId(visitorId);
@@ -241,18 +245,24 @@ public class AppointmentController {
         logger.warn("No appointments found for institution ID: {}, date: {}, status: {}", institutionId, date, status);
         return new ResponseEntity<>(HttpStatus.NOT_FOUND);
     }
-    
+
     @PutMapping("/reschedule/{appointmentId}")
     public ResponseEntity<?> rescheduleAppointment(
             @PathVariable Integer appointmentId,
             @RequestParam("newDate") String newDateStr,
             @RequestParam("newTime") String newTimeStr) {
-
         try {
-            LocalDate newDate = LocalDate.parse(newDateStr); // Convert String to LocalDate
-            Time newTime = Time.valueOf(newTimeStr); // Convert String to Time
+            LocalDate newDate = LocalDate.parse(newDateStr);
+            Time newTime = Time.valueOf(newTimeStr);
 
             Appointment updatedAppointment = appointmentService.rescheduleAppointment(appointmentId, newDate, newTime);
+
+            // Log new meeting link if the appointment is virtual
+            if (updatedAppointment.getMeetingType() == MeetingType.VIRTUAL) {
+                logger.info("New virtual meeting link generated for rescheduled appointment ID {}: {}",
+                        updatedAppointment.getAppointmentid(), updatedAppointment.getVideoMeetingLink());
+            }
+
             return ResponseEntity.ok(updatedAppointment);
         } catch (Exception e) {
             return ResponseEntity.status(500).body("Error rescheduling appointment: " + e.getMessage());

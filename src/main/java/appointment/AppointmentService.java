@@ -3,6 +3,7 @@ package appointment;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
 import jakarta.transaction.Transactional;
@@ -13,10 +14,7 @@ import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -27,10 +25,11 @@ public class AppointmentService {
 
     @Autowired
     private AppointmentRepository appointmentRepository;
-    
+
     @Autowired
     private VisitorRepository visitorRepository;
-
+    @Autowired
+    private UsersRepository usersRepository;
     @Autowired
     private InstitutionRepository institutionRepository;
 
@@ -65,16 +64,32 @@ public class AppointmentService {
             // Set visitor object in appointment
             appointment.setVisitor(visitor);
 
-            // Validate institution
+            // Validate institution ID before fetching
+            if (appointment.getInstitution() == null || appointment.getInstitution().getId() == null) {
+                throw new RuntimeException("Institution details are required.");
+            }
+
+            if (appointment.getInstitution() == null || appointment.getInstitution().getId() == null) {
+                throw new RuntimeException("Institution details are required.");
+            }
             Institution institution = institutionRepository.findById(appointment.getInstitution().getId()).orElse(null);
             if (institution == null) {
-                logger.error("Error creating appointment: Invalid institution.");
-                throw new RuntimeException("Invalid institution");
+                throw new RuntimeException("Invalid institution ID: " + appointment.getInstitution().getId());
             }
             appointment.setInstitution(institution);
-            
-            
-         // Convert java.sql.Time to java.time.LocalTime
+
+// ✅ Fetch and validate the user only once
+            Users user = usersRepository.findById(appointment.getUser().getUserid())
+                    .orElseThrow(() -> new RuntimeException("Invalid user ID: " + appointment.getUser().getUserid()));
+
+// ✅ Ensure the user is a physiotherapist before assigning
+            if (!user.getRoleName().equals("PHYSIOTHERAPIST")) {
+                throw new RuntimeException("User is not a physiotherapist.");
+            }
+
+            appointment.setUser(user);
+
+            // Convert java.sql.Time to java.time.LocalTime
             LocalTime time = appointment.getTime().toLocalTime();
 
             // Validate appointment date and time
@@ -96,6 +111,13 @@ public class AppointmentService {
             appointment.setPasscode(passcode);
             appointment.setAppointmentstatus("booked");
 
+            // Check if appointment is virtual and generate a meeting link
+            if (appointment.getMeetingType() == MeetingType.VIRTUAL) {
+                String meetingLink = generateMeetingLink(user);
+
+                appointment.setVideoMeetingLink(meetingLink);
+            }
+
             // Save appointment
             Appointment savedAppointment = appointmentRepository.save(appointment);
 
@@ -104,13 +126,28 @@ public class AppointmentService {
 
             return savedAppointment;
         } catch (Exception e) {
-            logger.error("Error creating appointment", e);
+            logger.warn("Appointment creation failed for visitor ID: {}, institution ID: {}, physiotherapist ID: {}",
+                    appointment.getVisitor().getVisitorid(),
+                    appointment.getInstitution().getId(),
+                    appointment.getUser().getUserid()
+            );
+
             throw e; // Rethrow the exception or handle as needed
         }
     }
-    
-    
-    
+
+    // Generate a random meeting link (Jitsi Meet Example)
+    private String generateMeetingLink(Users physiotherapist) {
+        String uniqueRoom = UUID.randomUUID().toString();
+
+        // Add physiotherapist email as a host parameter (if supported by the meeting provider)
+        String meetingLink = "https://meet.jit.si/" + uniqueRoom + "?moderator=" + physiotherapist.getEmail();
+
+        return meetingLink;
+    }
+
+
+
     private boolean isDateTimeInFuture(LocalDate date, LocalTime time) {
         // Get the current time with the system's default time zone
         ZonedDateTime now = ZonedDateTime.now();
@@ -123,7 +160,6 @@ public class AppointmentService {
     }
 
 
-
     public List<Appointment> getAppointmentsByInstitutionId(Long institutionId) {
         List<Appointment> appointments = appointmentRepository.findByInstitutionId(institutionId);
         logger.info("Retrieved {} appointments for institution with ID {}", appointments.size(), institutionId);
@@ -134,7 +170,7 @@ public class AppointmentService {
         try {
             logger.info("Retrieving available slots for date: {}, department: {}, institutionId: {}", date, department, institutionId);
 
-            
+
             // Check if the date is in the past
             if (date.isBefore(LocalDate.now())) {
                 logger.warn("The provided date is in the past.");
@@ -177,7 +213,6 @@ public class AppointmentService {
     }
 
 
-
     private List<Time> generateAllTimeSlots() {
         // Define all possible time slots
         return Stream.of(
@@ -217,8 +252,9 @@ public class AppointmentService {
 
     private boolean isAppointmentResolved(Appointment appointment) {
         return "attended".equalsIgnoreCase(appointment.getAppointmentstatus()) ||
-               "canceled".equalsIgnoreCase(appointment.getAppointmentstatus());
+                "canceled".equalsIgnoreCase(appointment.getAppointmentstatus());
     }
+
     public Appointment updateAppointment(int id, Appointment newAppointment) {
         Optional<Appointment> optionalAppointment = appointmentRepository.findById(id);
 
@@ -284,7 +320,6 @@ public class AppointmentService {
         return null;
     }
 
-    
 
     private void sendCheckoutConfirmationEmail(Appointment appointment) {
         try {
@@ -320,68 +355,95 @@ public class AppointmentService {
     }
 
 
+    public void deleteAppointment(int id) {
+        // TODO Auto-generated method stub
+
+    }
+
+    public List<Appointment> getAppointmentsByInstitutionIdAndDateAndStatus(Long institutionId, LocalDate date, String status) {
+        logger.info("Fetching appointments for institution ID: {}, date: {}, status: {}", institutionId, date, status);
+        List<Appointment> appointments = appointmentRepository.findByInstitutionIdAndDateAndAppointmentstatus(institutionId, date, status);
+        logger.info("Retrieved {} appointments for institution ID: {}, date: {}, status: {}", appointments.size(), institutionId, date, status);
+        return appointments;
+    }
+
+    public List<Appointment> getAppointmentsByVisitorId(int visitorId) {
+        List<Appointment> appointments = appointmentRepository.findByVisitorVisitorid(visitorId);
+        logger.info("Retrieved {} appointments for visitor with ID: {}", appointments.size(), visitorId);
+        return appointments;
+    }
+
+    @Transactional
+    public Appointment rescheduleAppointment(int id, LocalDate newDate, Time newTime) throws Exception {
+        Optional<Appointment> optionalAppointment = appointmentRepository.findById(id);
+
+        if (optionalAppointment.isPresent()) {
+            Appointment existingAppointment = optionalAppointment.get();
+
+            // Check if the appointment status is 'attended' or 'canceled'
+            if (existingAppointment.getAppointmentstatus().equalsIgnoreCase("attended") ||
+                    existingAppointment.getAppointmentstatus().equalsIgnoreCase("canceled")) {
+                throw new Exception("Rescheduling not allowed for attended or canceled appointments.");
+            }
+
+            // Convert java.sql.Time to java.time.LocalTime
+            LocalTime localTime = newTime.toLocalTime();
+
+            // Validate new appointment date and time
+            if (!isDateTimeInFuture(newDate, localTime)) {
+                logger.warn("New appointment date or time is in the past.");
+                throw new RuntimeException("Cannot reschedule to a past date or time.");
+            }
+
+            // Generate a new passcode
+            String newPasscode = passcodeGenerator.generateUniquePasscode();
+            existingAppointment.setPasscode(newPasscode);
+
+            // Update appointment details
+            existingAppointment.setDate(newDate);
+            existingAppointment.setTime(newTime);
+            existingAppointment.setAppointmentstatus("rescheduled");
+
+            // If the appointment is virtual, generate a new meeting link
+            if (existingAppointment.getMeetingType() == MeetingType.VIRTUAL) {
+                Users physiotherapist = existingAppointment.getUser(); // ✅ Get physiotherapist
+
+                if (physiotherapist != null) {  // ✅ Ensure physiotherapist is not null
+                    String meetingLink = generateMeetingLink(physiotherapist);
+                    existingAppointment.setVideoMeetingLink(meetingLink);
+                } else {
+                    logger.warn("No physiotherapist assigned to appointment ID: {}", existingAppointment.getAppointmentid());
+                }
+            }
 
 
-	public void deleteAppointment(int id) {
-		// TODO Auto-generated method stub
-		
-	}
-	  public List<Appointment> getAppointmentsByInstitutionIdAndDateAndStatus(Long institutionId, LocalDate date, String status) {
-	        logger.info("Fetching appointments for institution ID: {}, date: {}, status: {}", institutionId, date, status);
-	        List<Appointment> appointments = appointmentRepository.findByInstitutionIdAndDateAndAppointmentstatus(institutionId, date, status);
-	        logger.info("Retrieved {} appointments for institution ID: {}, date: {}, status: {}", appointments.size(), institutionId, date, status);
-	        return appointments;
-	    }
-	    public List<Appointment> getAppointmentsByVisitorId(int visitorId) {
-	        List<Appointment> appointments = appointmentRepository.findByVisitorVisitorid(visitorId);
-	        logger.info("Retrieved {} appointments for visitor with ID: {}", appointments.size(), visitorId);
-	        return appointments;
-	    }
+            // ✅ Save and return the updated appointment
+            appointmentRepository.save(existingAppointment);
+            emailService.sendRescheduledAppointmentEmail(existingAppointment);
 
-	    @Transactional
-	    public Appointment rescheduleAppointment(int id, LocalDate newDate, Time newTime) throws Exception {
-	        Optional<Appointment> optionalAppointment = appointmentRepository.findById(id);
+            return existingAppointment;
+        }
 
-	        if (optionalAppointment.isPresent()) {
-	            Appointment existingAppointment = optionalAppointment.get();
+        // ✅ Throw an error if no appointment is found
+        throw new Exception("Appointment not found");
+    }
+    @Scheduled(fixedRate = 60000) // Runs every 60 seconds (1 minute)
+    public void sendAppointmentReminders() {
+        LocalDateTime now = LocalDateTime.now();
+        LocalDateTime reminderTime = now.plusMinutes(30); // Find appointments starting in 30 minutes
 
-	            // Check if the appointment status is 'attended' or 'canceled'
-	            if (existingAppointment.getAppointmentstatus().equalsIgnoreCase("attended") || existingAppointment.getAppointmentstatus().equalsIgnoreCase("canceled")) {
-	                throw new Exception("Rescheduling not allowed for attended or canceled appointments.");
-	            }
-	            // Convert java.sql.Time to java.time.LocalTime
-	            LocalTime localTime = newTime.toLocalTime();
+        LocalDate today = now.toLocalDate();
+        Time startTime = Time.valueOf(now.toLocalTime());
+        Time endTime = Time.valueOf(reminderTime.toLocalTime());
 
-	            // Validate new appointment date and time
-	            if (!isDateTimeInFuture(newDate, localTime)) {
-	                logger.warn("New appointment date or time is in the past.");
-	                throw new RuntimeException("Cannot reschedule to a past date or time.");
-	            }
+        List<Appointment> upcomingAppointments = appointmentRepository.findAppointmentsBetween(today, startTime, endTime);
 
-	            // Generate a new passcode
-	            String newPasscode = passcodeGenerator.generateUniquePasscode();
-	            existingAppointment.setPasscode(newPasscode);
+        for (Appointment appointment : upcomingAppointments) {
+            if (appointment.getMeetingType() == MeetingType.VIRTUAL) {
+                emailService.sendReminderEmail(appointment); // Ensure this method exists in `EmailService`
+            }
+        }
+    }
 
-	            // Update appointment details
-	            existingAppointment.setDate(newDate);
-	            existingAppointment.setTime(newTime);
-
-	            // Update the status to 'rescheduled'
-	            existingAppointment.setAppointmentstatus("rescheduled");
-
-	            // Save the updated appointment
-	            appointmentRepository.save(existingAppointment);
-
-	            // Send rescheduling confirmation email to visitor
-	            emailService.sendRescheduledAppointmentEmail(existingAppointment);
-
-	            return existingAppointment;
-	        }
-
-	        throw new Exception("Appointment not found");
-	    }
-
-
-	
 
 }
