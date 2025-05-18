@@ -32,7 +32,7 @@ public class VisitorControllerClass {
 
     private static final Logger logger = LoggerFactory.getLogger(VisitorControllerClass.class);
     //@Autowired
-   // private Validator validator; // Injecting the Validator bean
+    // private Validator validator; // Injecting the Validator bean
     @Autowired
     private VisitorService visitorService;
     @ApiOperation(value = "View a list of visitors", response = List.class)
@@ -79,7 +79,7 @@ public class VisitorControllerClass {
         return visitorService.loginVisitor(loginRequest.getEmail(), loginRequest.getPassword());
     }
 
-    
+
     @ApiOperation(value = "Reset visitor password")
     @PostMapping("/resetPassword")
     public ResponseEntity<String> resetPassword(

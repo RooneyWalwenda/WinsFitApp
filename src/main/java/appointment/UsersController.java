@@ -19,8 +19,8 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 @RestController
 @RequestMapping("/api/users")
 public class UsersController {
-	
-	private static final org.slf4j.Logger logger = LoggerFactory.getLogger(UsersController.class);
+
+    private static final org.slf4j.Logger logger = LoggerFactory.getLogger(UsersController.class);
 
     @Autowired
     private UsersService usersService;
@@ -71,16 +71,20 @@ public class UsersController {
         return ResponseEntity.ok(newUser);
     }
 
-    @ApiOperation(value = "Login user")
     @PostMapping("/login")
-    public ResponseEntity<?> loginUser(
-            @ApiParam(value = "Login request object", required = true)
+    public ResponseEntity<LoginResponse> loginUser(
             @RequestBody LoginRequest loginRequest) {
         try {
-            ResponseEntity<LoginResponse> user = usersService.loginUser(loginRequest.getEmail(), loginRequest.getPassword(), loginRequest.getRole());
-            return ResponseEntity.ok(user);
+            LoginResponse loginResponse = usersService.loginUser(
+                    loginRequest.getEmail(),
+                    loginRequest.getPassword(),
+                    loginRequest.getRole()
+            ).getBody();
+
+
+            return ResponseEntity.ok(loginResponse);
         } catch (IllegalArgumentException e) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(e.getMessage());
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(null);
         }
     }
 
@@ -100,7 +104,7 @@ public class UsersController {
         } else {
             logger.warn("User with ID: {} not found", id);
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                                 .body(new ResponseModel("User not found", "USER_NOT_FOUND"));
+                    .body(new ResponseModel("User not found", "USER_NOT_FOUND"));
         }
     }
 
@@ -171,16 +175,16 @@ public class UsersController {
         }
         return ResponseEntity.notFound().build();
     }
-    
+
     @ApiOperation(value = "Create a new super admin user")
     @PostMapping("/super-admin")
     public ResponseEntity<Users> createSuperAdmin(
             @ApiParam(value = "Super Admin object to store in database table", required = true)
             @RequestBody SuperAdminRequest superAdminRequest) {
         Users newSuperAdmin = usersService.createSuperAdmin(
-            superAdminRequest.getEmail(),
-            superAdminRequest.getPassword(),
-            superAdminRequest.getUsername()
+                superAdminRequest.getEmail(),
+                superAdminRequest.getPassword(),
+                superAdminRequest.getUsername()
         );
         return ResponseEntity.status(HttpStatus.CREATED).body(newSuperAdmin);
     }
@@ -190,8 +194,8 @@ public class UsersController {
         // Implement this method to get the current user
         return null;
     }
-    
-   
+
+
     @GetMapping("/institution/{institutionId}/users")
     public ResponseEntity<List<Users>> getUsersByInstitutionId(
             @PathVariable Long institutionId) {
@@ -202,8 +206,8 @@ public class UsersController {
             return ResponseEntity.notFound().build();
         }
     }
-    
- // Endpoint to initiate password reset
+
+    // Endpoint to initiate password reset
     @PostMapping("/reset-password")
     public ResponseEntity<?> resetPassword(@RequestParam String email) {
         try {
@@ -216,8 +220,9 @@ public class UsersController {
         }
     }
 
+
     // Endpoint to change password
- // Endpoint to change password
+    // Endpoint to change password
     @PutMapping("/change-password")
     public ResponseEntity<?> changePassword(@RequestBody ChangePasswordRequest changePasswordRequest) {
         try {

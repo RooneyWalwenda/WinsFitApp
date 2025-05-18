@@ -254,7 +254,9 @@ public class AppointmentService {
         return "attended".equalsIgnoreCase(appointment.getAppointmentstatus()) ||
                 "canceled".equalsIgnoreCase(appointment.getAppointmentstatus());
     }
-
+    public List<Appointment> getAppointmentsByPhysioId(int physioId) {
+        return appointmentRepository.findByUserUserid(physioId);
+    }
     public Appointment updateAppointment(int id, Appointment newAppointment) {
         Optional<Appointment> optionalAppointment = appointmentRepository.findById(id);
 

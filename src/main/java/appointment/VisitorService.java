@@ -58,6 +58,7 @@ public class VisitorService {
         emailService.sendWelcomeEmail(savedVisitor, formattedVisitorId);
 
         return savedVisitor;
+
     }
 
     public ResponseEntity<?> loginVisitor(String email, String password) {

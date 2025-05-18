@@ -1,18 +1,26 @@
-# Use an official OpenJDK runtime as a parent image
-FROM openjdk:17-jdk-slim
-
-# Set working directory
+# ---------- Build stage ----------
+FROM maven:3.8.7-openjdk-17-slim AS build
 WORKDIR /app
 
-# Copy JAR file into container
-COPY target/appointmentBooking-0.0.1-SNAPSHOT.jar /app/
+# Copy all source code
+COPY . .
+
+# Package the application
+RUN mvn clean package -DskipTests
+
+# ---------- Run stage ----------
+FROM openjdk:17-jdk-slim
+WORKDIR /app
+
+# Copy JAR from the build stage
+COPY --from=build /app/target/appointmentBooking-0.0.1-SNAPSHOT.jar /app/
 
 # Copy and set permissions for entrypoint script
 COPY docker-entrypoint.sh /app/docker-entrypoint.sh
 RUN chmod +x /app/docker-entrypoint.sh
 
-# Expose the application port
+# Expose the app port
 EXPOSE 8080
 
-# Use the entrypoint script
+# Run the app
 ENTRYPOINT ["/app/docker-entrypoint.sh"]

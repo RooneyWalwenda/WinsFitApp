@@ -28,20 +28,20 @@ public class InstitutionService {
         try {
             // Set the created date before saving the institution
             institution.setCreatedDate(new Date());
-            
+
             // Save the institution to the repository
             Institution createdInstitution = institutionRepository.save(institution);
-            
+
             // Log success message after saving
             logger.info("Institution Created successfully: {}", createdInstitution.getName());
-            
+
             // Return the created institution
             return createdInstitution;
-            
+
         } catch (Exception e) {
             // Log error if there's an exception
             logger.error("Failed to create institution: {}", e.getMessage());
-            
+
             // Rethrow the exception to handle it at a higher level
             throw e;
         }

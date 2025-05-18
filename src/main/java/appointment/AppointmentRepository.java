@@ -27,4 +27,7 @@ public interface AppointmentRepository extends JpaRepository<Appointment, Intege
         @Query("SELECT a FROM Appointment a WHERE a.date = :date AND a.time BETWEEN :startTime AND :endTime")
         List<Appointment> findAppointmentsBetween(@Param("date") LocalDate date,
                                                   @Param("startTime") Time startTime,
-                                                  @Param("endTime") Time endTime);}
+                                                  @Param("endTime") Time endTime);
+
+    List<Appointment> findByUserUserid(int physioId);
+}

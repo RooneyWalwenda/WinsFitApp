@@ -47,7 +47,7 @@ public class UsersService {
                 if (user.getRoleName().equalsIgnoreCase(role)) {
                     boolean isDefaultPassword = user.isDefaultPassword(); // Check if the password is default
                     if (isDefaultPassword) {
-                        
+
                         // e.g., prompting the user to change their password.
                         logger.info("User logged in with default password: {}", email);
                     }
@@ -85,7 +85,7 @@ public class UsersService {
     public Users createUser(Users user, Users creatingUser) {
         // Set the password
         user.setPassword(passwordEncoder.encode(user.getPassword()));
-        
+
         // Check the role of the user being created and handle accordingly
         if (user.getRole() == UserRole.INSTITUTION_ADMIN || user.getRole() == UserRole.PHYSIOTHERAPIST) {
             return usersRepository.save(user);

@@ -246,6 +246,19 @@ public class AppointmentController {
         return new ResponseEntity<>(HttpStatus.NOT_FOUND);
     }
 
+    @Operation(summary = "Get appointments by physiotherapist ID", description = "Retrieve appointments for a specific physiotherapist")
+    @PreAuthorize("hasRole('PHYSIOTHERAPIST')")
+    @GetMapping("/physio/{physioId}")
+    public ResponseEntity<List<Appointment>> getAppointmentsByPhysioId(
+            @Parameter(description = "ID of the physiotherapist", required = true)
+            @PathVariable int physioId) {
+        List<Appointment> appointments = appointmentService.getAppointmentsByPhysioId(physioId);
+        if (!appointments.isEmpty()) {
+            return ResponseEntity.ok(appointments);
+        }
+        return ResponseEntity.noContent().build();
+    }
+
     @PutMapping("/reschedule/{appointmentId}")
     public ResponseEntity<?> rescheduleAppointment(
             @PathVariable Integer appointmentId,

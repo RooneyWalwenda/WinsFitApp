@@ -18,8 +18,8 @@ public class InstitutionController {
     public List<Institution> getAllInstitutions() {
         return institutionService.getAllInstitutions();
     }
-    
-    
+
+
 
     @GetMapping("/{id}")
     public ResponseEntity<Institution> getInstitutionById(@PathVariable Long id) {

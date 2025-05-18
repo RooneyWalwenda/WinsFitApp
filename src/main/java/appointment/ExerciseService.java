@@ -1,133 +1,123 @@
 package appointment;
 
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.http.*;
 import org.springframework.stereotype.Service;
-import org.springframework.web.client.RestTemplate;
+import jakarta.annotation.PostConstruct;
+
+import java.io.File;
 import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
 public class ExerciseService {
-
-    @Value("${exercisedb.api.key}")
-    private String exerciseApiKey;
-
+    private static final String EXERCISE_FOLDER = "src/main/resources/static/Images/ExerciseVideos";
     private final ExerciseRepository exerciseRepository;
-    private final RestTemplate restTemplate;
 
-    private static final int MAX_EXERCISES = 150; // Limit to 150 exercises in the database
-    private static final int PAGE_LIMIT = 50; // API fetch limit per page
-
-    @Autowired
-    public ExerciseService(ExerciseRepository exerciseRepository, RestTemplate restTemplate) {
+    public ExerciseService(ExerciseRepository exerciseRepository) {
         this.exerciseRepository = exerciseRepository;
-        this.restTemplate = restTemplate;
     }
 
-    /**
-     * Constructs the API URL with dynamic pagination support.
-     */
-    private String getExerciseDbUrl(int page) {
-        return String.format("https://exercisedb.p.rapidapi.com/exercises?limit=%d&page=%d", PAGE_LIMIT, page);
+    public Exercise saveExercise(Exercise exercise) {
+        return exerciseRepository.save(exercise);
     }
 
-    /**
-     * Fetches exercises from API and stores them in the database.
-     */
-    public void fetchAndStoreExercises() {
-        long currentCount = exerciseRepository.count();
+    public List<Exercise> getAllExercises() {
+        return exerciseRepository.findAll();
+    }
 
-        if (currentCount >= MAX_EXERCISES) {
-            System.out.println("Database already contains " + MAX_EXERCISES + " exercises. No new exercises needed.");
+    public List<Exercise> getExercisesForVisitor(String gender, String experienceLevel) {
+        return exerciseRepository.findByGenderAndExperienceLevel(gender, experienceLevel);
+    }
+
+    public List<Exercise> searchExercises(String gender, String experienceLevel, String keyword) {
+        return exerciseRepository.findByGenderAndExperienceLevelAndNameContainingIgnoreCase(
+                gender, experienceLevel, keyword);
+    }
+
+    public Map<String, List<Exercise>> assignExercises(String gender, String experienceLevel) {
+        List<Exercise> matchingExercises = exerciseRepository.findByGenderAndExperienceLevel(gender, experienceLevel);
+
+        if (matchingExercises.isEmpty()) {
+            throw new IllegalArgumentException("No exercises found for gender: " + gender +
+                    " and experience level: " + experienceLevel);
+        }
+
+        Map<String, List<Exercise>> weeklyPlan = new LinkedHashMap<>();
+        String[] days = {"Monday", "Tuesday", "Wednesday", "Thursday", "Friday"};
+
+        // Shuffle the exercises
+        Collections.shuffle(matchingExercises);
+
+        // Use modulo to cycle through exercises
+        for (int i = 0; i < days.length; i++) {
+            List<Exercise> dailyExercises = new ArrayList<>();
+            for (int j = 0; j < 5; j++) {
+                int exerciseIndex = (i * 5 + j) % matchingExercises.size();
+                Exercise exercise = matchingExercises.get(exerciseIndex);
+
+                // Ensure filePath is properly formatted
+                if (exercise.getFilePath() != null && !exercise.getFilePath().startsWith("/")) {
+                    exercise.setFilePath("/" + exercise.getFilePath());
+                }
+
+                dailyExercises.add(exercise);
+            }
+            weeklyPlan.put(days[i], dailyExercises);
+        }
+
+        return weeklyPlan;
+    }
+    public List<Map<String, Object>> validateAllVideos() {
+        List<Exercise> exercises = exerciseRepository.findAll();
+        List<Map<String, Object>> results = new ArrayList<>();
+
+        for (Exercise exercise : exercises) {
+            // Remove /static prefix if present for file existence check
+            String path = exercise.getFilePath().startsWith("/static")
+                    ? exercise.getFilePath().substring(7)
+                    : exercise.getFilePath();
+
+            String videoPath = "src/main/resources/static" + path;
+            File file = new File(videoPath);
+
+            Map<String, Object> result = new HashMap<>();
+            result.put("id", exercise.getId());
+            result.put("name", exercise.getName());
+            result.put("filePath", exercise.getFilePath());
+            result.put("exists", file.exists());
+
+            results.add(result);
+        }
+
+        return results;
+    }
+
+    @PostConstruct
+    public void storeExerciseVideosInDatabase() {
+        File folder = new File(EXERCISE_FOLDER);
+        if (!folder.exists() || !folder.isDirectory()) {
+            System.out.println("Exercise video directory not found!");
             return;
         }
 
-        System.out.println("Fetching exercises from API...");
+        List<String> existingExerciseNames = exerciseRepository.findAll()
+                .stream().map(Exercise::getName).toList();
 
-        HttpHeaders headers = new HttpHeaders();
-        headers.set("X-RapidAPI-Key", exerciseApiKey);
-        headers.set("X-RapidAPI-Host", "exercisedb.p.rapidapi.com");
-
-        HttpEntity<String> entity = new HttpEntity<>(headers);
-
-        int page = 1; // Start fetching from page 1
-        boolean hasMorePages = true;
-        boolean fetchedNewExercises = false;
-
-        Set<String> existingGifUrls = exerciseRepository.findAll()
-                .stream()
-                .map(Exercise::getGifUrl)
-                .collect(Collectors.toSet());
-
-        while (currentCount < MAX_EXERCISES && hasMorePages) {
-            String url = getExerciseDbUrl(page);
-            ResponseEntity<List> response;
-
-            try {
-                response = restTemplate.exchange(url, HttpMethod.GET, entity, List.class);
-            } catch (Exception e) {
-                System.err.println("Failed to fetch exercises from API: " + e.getMessage());
-                return;
-            }
-
-            List<Map<String, Object>> exercises = response.getBody();
-            if (exercises == null || exercises.isEmpty()) {
-                System.out.println("No more exercises available from API.");
-                break;
-            }
-
-            List<Exercise> newExercises = exercises.stream()
-                    .map(ex -> {
-                        String gifUrl = (String) ex.get("gifUrl");
-
-                        if (existingGifUrls.contains(gifUrl)) {
-                            System.out.println("Skipping existing exercise: " + gifUrl);
-                            return null;
-                        }
-
-                        return new Exercise(
-                                (String) ex.get("name"),
-                                gifUrl,
-                                (String) ex.get("target"),
-                                (String) ex.get("bodyPart"),
-                                (String) ex.get("equipment"),
-                                (String) ex.get("difficulty"),
-                                (List<String>) ex.get("secondaryMuscles"),
-                                (List<String>) ex.get("instructions")
-                        );
-                    })
-                    .filter(Objects::nonNull)  // Remove null values (duplicates)
-                    .limit(MAX_EXERCISES - currentCount) // Ensure max limit is not exceeded
-                    .collect(Collectors.toList());
-
-            if (!newExercises.isEmpty()) {
-                exerciseRepository.saveAll(newExercises);
-                fetchedNewExercises = true;
-                currentCount = exerciseRepository.count(); // Update count after saving
-            }
-
-            System.out.println("Fetched page " + page + " with " + exercises.size() + " items.");
-            System.out.println("Added " + newExercises.size() + " new exercises. Total now: " + currentCount);
-
-            // If API returned less than PAGE_LIMIT, it means we're at the last page
-            hasMorePages = (exercises.size() == PAGE_LIMIT);
-            page++; // Move to the next page
-        }
-
-        if (!fetchedNewExercises) {
-            System.out.println("No new exercises were added. All fetched exercises already exist.");
-        }
-    }
-
-    /**
-     * Fetches a random set of exercises.
-     */
-    public List<Exercise> getRandomExercises() {
-        return exerciseRepository.findAll()
-                .stream()
-                .limit(6)
+        List<File> videoFiles = Arrays.stream(Objects.requireNonNull(folder.listFiles()))
+                .filter(file -> file.getName().toLowerCase().endsWith(".mp4"))
                 .collect(Collectors.toList());
+
+        for (File file : videoFiles) {
+            String name = file.getName().replace(".mp4", "");
+            if (!existingExerciseNames.contains(name)) {
+                String gender = name.toLowerCase().contains("female") ? "female" : "male";
+                String experienceLevel = name.toLowerCase().contains("advanced") ? "advanced" :
+                        (name.toLowerCase().contains("intermediate") ? "intermediate" : "beginner");
+
+                // Store path without /static prefix for consistency
+                String relativePath = "/Images/ExerciseVideos/" + file.getName();
+                Exercise exercise = new Exercise(name, gender, experienceLevel, relativePath);
+                saveExercise(exercise);
+            }
+        }
     }
 }

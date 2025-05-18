@@ -1,80 +1,160 @@
 package appointment;
 
 import jakarta.persistence.*;
-import java.util.List;
+import java.io.File;
+import java.util.Objects;
 
 @Entity
-@Table(name = "exercises")
 public class Exercise {
-
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(nullable = false, unique = true)
+    @Column(nullable = false)
     private String name;
 
-    @Column(nullable = false, unique = true)
-    private String gifUrl;
-
     @Column(nullable = false)
-    private String target; // Target muscle group
+    private String gender;
 
-    @Column(nullable = false)
-    private String bodyPart; // Target body part
+    @Column(name = "experience_level", nullable = false)
+    private String experienceLevel;
 
-    @Column(nullable = false)
-    private String equipment; // Equipment used
+    @Column(name = "file_path", nullable = false)
+    private String filePath;
 
-    @Column(nullable = false)
-    private String difficulty; // Difficulty level (beginner, intermediate, advanced)
+    @Transient
+    private Boolean videoExists;
 
-    @ElementCollection
-    private List<String> secondaryMuscles; // Additional muscles worked
+    // Default constructor required by JPA
+    public Exercise() {
+    }
 
-    @ElementCollection
-    private List<String> instructions; // Step-by-step guide
-
-    // No-args constructor (required by JPA)
-    public Exercise() {}
-
-    // Constructor without ID (Recommended for new entities)
-    public Exercise(String name, String gifUrl, String target, String bodyPart, String equipment, String difficulty, List<String> secondaryMuscles, List<String> instructions) {
+    // Constructor for creating new exercises
+    public Exercise(String name, String gender, String experienceLevel, String filePath) {
         this.name = name;
-        this.gifUrl = gifUrl;
-        this.target = target;
-        this.bodyPart = bodyPart;
-        this.equipment = equipment;
-        this.difficulty = difficulty;
-        this.secondaryMuscles = secondaryMuscles;
-        this.instructions = instructions;
+        this.gender = gender;
+        this.experienceLevel = experienceLevel;
+        setFilePath(filePath); // Use setter to ensure consistent path format
+    }
+
+    // Constructor with ID for existing exercises
+    public Exercise(Long id, String name, String gender, String experienceLevel, String filePath) {
+        this.id = id;
+        this.name = name;
+        this.gender = gender;
+        this.experienceLevel = experienceLevel;
+        setFilePath(filePath); // Use setter to ensure consistent path format
     }
 
     // Getters and Setters
-    public Long getId() { return id; }
-    public void setId(Long id) { this.id = id; }
+    public Long getId() {
+        return id;
+    }
 
-    public String getName() { return name; }
-    public void setName(String name) { this.name = name; }
+    public void setId(Long id) {
+        this.id = id;
+    }
 
-    public String getGifUrl() { return gifUrl; }
-    public void setGifUrl(String gifUrl) { this.gifUrl = gifUrl; }
+    public String getName() {
+        return name;
+    }
 
-    public String getTarget() { return target; }
-    public void setTarget(String target) { this.target = target; }
+    public void setName(String name) {
+        this.name = name;
+    }
 
-    public String getBodyPart() { return bodyPart; }
-    public void setBodyPart(String bodyPart) { this.bodyPart = bodyPart; }
+    public String getGender() {
+        return gender;
+    }
 
-    public String getEquipment() { return equipment; }
-    public void setEquipment(String equipment) { this.equipment = equipment; }
+    public void setGender(String gender) {
+        this.gender = gender;
+    }
 
-    public String getDifficulty() { return difficulty; }
-    public void setDifficulty(String difficulty) { this.difficulty = difficulty; }
+    public String getExperienceLevel() {
+        return experienceLevel;
+    }
 
-    public List<String> getSecondaryMuscles() { return secondaryMuscles; }
-    public void setSecondaryMuscles(List<String> secondaryMuscles) { this.secondaryMuscles = secondaryMuscles; }
+    public void setExperienceLevel(String experienceLevel) {
+        this.experienceLevel = experienceLevel;
+    }
 
-    public List<String> getInstructions() { return instructions; }
-    public void setInstructions(List<String> instructions) { this.instructions = instructions; }
+    public String getFilePath() {
+        return filePath;
+    }
+
+    public void setFilePath(String filePath) {
+        // Normalize the file path to ensure consistency
+        if (filePath != null) {
+            // Remove any leading /static prefix if present
+            this.filePath = filePath.startsWith("/static")
+                    ? filePath.substring(7)
+                    : filePath;
+            // Ensure path starts with /
+            if (!this.filePath.startsWith("/")) {
+                this.filePath = "/" + this.filePath;
+            }
+        } else {
+            this.filePath = null;
+        }
+        // Reset video exists cache when path changes
+        this.videoExists = null;
+    }
+
+    /**
+     * Checks if the video file exists on the filesystem
+     * @return true if the video file exists, false otherwise
+     */
+    public Boolean getVideoExists() {
+        if (videoExists == null && filePath != null) {
+            try {
+                String normalizedPath = filePath.startsWith("/static")
+                        ? filePath.substring(7)
+                        : filePath;
+                String fullPath = "src/main/resources/static" + normalizedPath;
+                videoExists = new File(fullPath).exists();
+            } catch (Exception e) {
+                videoExists = false;
+            }
+        }
+        return videoExists != null ? videoExists : false;
+    }
+
+    /**
+     * Gets the full URL path for accessing the video
+     * @param baseUrl The base URL of the server (e.g., "http://localhost:8080")
+     * @return The complete URL to access the video
+     */
+    public String getVideoUrl(String baseUrl) {
+        if (filePath == null) return null;
+        return baseUrl + filePath;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        Exercise exercise = (Exercise) o;
+        return Objects.equals(id, exercise.id) &&
+                Objects.equals(name, exercise.name) &&
+                Objects.equals(gender, exercise.gender) &&
+                Objects.equals(experienceLevel, exercise.experienceLevel) &&
+                Objects.equals(filePath, exercise.filePath);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(id, name, gender, experienceLevel, filePath);
+    }
+
+    @Override
+    public String toString() {
+        return "Exercise{" +
+                "id=" + id +
+                ", name='" + name + '\'' +
+                ", gender='" + gender + '\'' +
+                ", experienceLevel='" + experienceLevel + '\'' +
+                ", filePath='" + filePath + '\'' +
+                '}';
+    }
 }
