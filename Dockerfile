@@ -9,7 +9,9 @@ COPY . .
 RUN mvn clean package -DskipTests
 
 # ---------- Run stage ----------
-FROM maven:3.9.4-openjdk-17
+FROM maven:3.9.4-openjdk-17 AS build
+
+
 
 WORKDIR /app
 
