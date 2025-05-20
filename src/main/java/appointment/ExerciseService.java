@@ -1,15 +1,19 @@
 package appointment;
 
+import org.springframework.core.io.DefaultResourceLoader;
+import org.springframework.core.io.Resource;
+import org.springframework.core.io.ResourceLoader;
 import org.springframework.stereotype.Service;
 import jakarta.annotation.PostConstruct;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
 public class ExerciseService {
-    private static final String EXERCISE_FOLDER = "src/main/resources/static/Images/ExerciseVideos";
+    private static final String EXERCISE_FOLDER = "classpath:static/Images/ExerciseVideos";
     private final ExerciseRepository exerciseRepository;
 
     public ExerciseService(ExerciseRepository exerciseRepository) {
@@ -66,6 +70,7 @@ public class ExerciseService {
 
         return weeklyPlan;
     }
+
     public List<Map<String, Object>> validateAllVideos() {
         List<Exercise> exercises = exerciseRepository.findAll();
         List<Map<String, Object>> results = new ArrayList<>();
@@ -93,31 +98,39 @@ public class ExerciseService {
 
     @PostConstruct
     public void storeExerciseVideosInDatabase() {
-        File folder = new File(EXERCISE_FOLDER);
-        if (!folder.exists() || !folder.isDirectory()) {
-            System.out.println("Exercise video directory not found!");
-            return;
-        }
+        ResourceLoader resourceLoader = new DefaultResourceLoader();
+        try {
+            Resource resource = resourceLoader.getResource(EXERCISE_FOLDER);
+            File folder = resource.getFile();
 
-        List<String> existingExerciseNames = exerciseRepository.findAll()
-                .stream().map(Exercise::getName).toList();
-
-        List<File> videoFiles = Arrays.stream(Objects.requireNonNull(folder.listFiles()))
-                .filter(file -> file.getName().toLowerCase().endsWith(".mp4"))
-                .collect(Collectors.toList());
-
-        for (File file : videoFiles) {
-            String name = file.getName().replace(".mp4", "");
-            if (!existingExerciseNames.contains(name)) {
-                String gender = name.toLowerCase().contains("female") ? "female" : "male";
-                String experienceLevel = name.toLowerCase().contains("advanced") ? "advanced" :
-                        (name.toLowerCase().contains("intermediate") ? "intermediate" : "beginner");
-
-                // Update path to include /static prefix for proper serving
-                String relativePath = "/static/Images/ExerciseVideos/" + file.getName();
-                Exercise exercise = new Exercise(name, gender, experienceLevel, relativePath);
-                saveExercise(exercise);
+            if (!folder.exists() || !folder.isDirectory()) {
+                System.out.println("Exercise video directory not found at: " + folder.getAbsolutePath());
+                return;
             }
+
+            List<String> existingExerciseNames = exerciseRepository.findAll()
+                    .stream().map(Exercise::getName).toList();
+
+            List<File> videoFiles = Arrays.stream(Objects.requireNonNull(folder.listFiles()))
+                    .filter(file -> file.getName().toLowerCase().endsWith(".mp4"))
+                    .collect(Collectors.toList());
+
+            for (File file : videoFiles) {
+                String name = file.getName().replace(".mp4", "");
+                if (!existingExerciseNames.contains(name)) {
+                    String gender = name.toLowerCase().contains("female") ? "female" : "male";
+                    String experienceLevel = name.toLowerCase().contains("advanced") ? "advanced" :
+                            (name.toLowerCase().contains("intermediate") ? "intermediate" : "beginner");
+
+                    // Update path to include /static prefix for proper serving
+                    String relativePath = "/static/Images/ExerciseVideos/" + file.getName();
+                    Exercise exercise = new Exercise(name, gender, experienceLevel, relativePath);
+                    saveExercise(exercise);
+                }
+
+            }
+        } catch (IOException e) {
+            System.out.println("Error accessing exercise videos: " + e.getMessage());
         }
     }
 }

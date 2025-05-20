@@ -139,29 +139,11 @@
 
     <build>
         <resources>
-            <!-- Handle all files except binaries with filtering -->
-            <resource>
-                <directory>src/main/resources</directory>
-                <filtering>true</filtering>
-                <excludes>
-                    <exclude>**/*.p12</exclude>
-                    <exclude>**/*.mp4</exclude>
-                    <exclude>**/*.jpg</exclude>
-                    <exclude>**/*.png</exclude>
-                    <exclude>**/*.gif</exclude>
-                </excludes>
-            </resource>
-
-            <!-- Handle binary files without filtering -->
             <resource>
                 <directory>src/main/resources</directory>
                 <filtering>false</filtering>
                 <includes>
-                    <include>**/*.p12</include>
-                    <include>**/*.mp4</include>
-                    <include>**/*.jpg</include>
-                    <include>**/*.png</include>
-                    <include>**/*.gif</include>
+                    <include>**/*</include>
                 </includes>
             </resource>
         </resources>
@@ -178,13 +160,6 @@
                         </exclude>
                     </excludes>
                 </configuration>
-            </plugin>
-
-            <!-- Basic resources plugin without special configuration -->
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-resources-plugin</artifactId>
-                <version>3.3.1</version>
             </plugin>
         </plugins>
     </build>
