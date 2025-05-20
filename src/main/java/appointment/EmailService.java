@@ -5,7 +5,8 @@ import jakarta.mail.internet.MimeMessage;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.core.io.ClassPathResource;
+import org.springframework.core.io.Resource;
+import org.springframework.core.io.ResourceLoader;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Service;
@@ -23,6 +24,9 @@ public class EmailService {
 
     @Autowired
     private TemplateEngine templateEngine;
+
+    @Autowired
+    private ResourceLoader resourceLoader;
 
     public void sendEmailFromTemplate(String to, String subject, String templateName, Context context) {
         try {
@@ -47,16 +51,24 @@ public class EmailService {
         helper.setText(htmlBody, true);
 
         try {
-            // Attach WinsFit Logo
-            ClassPathResource logoResource = new ClassPathResource("static/images/WinsFit Logo.png");
-            helper.addInline("winsFitLogo", logoResource);
+            // Load WinsFit Logo
+            Resource logoResource = resourceLoader.getResource("classpath:static/Images/WinsFit Logo.png");
+            if (logoResource.exists()) {
+                helper.addInline("winsFitLogo", logoResource);
+            } else {
+                logger.warn("WinsFit Logo not found at: classpath:static/Images/WinsFit Logo.png");
+            }
 
-            // Attach WinsFit Robot
-            ClassPathResource robotResource = new ClassPathResource("static/images/winsFit Robot.png");
-            helper.addInline("winsFitRobot", robotResource);
+            // Load WinsFit Robot
+            Resource robotResource = resourceLoader.getResource("classpath:static/Images/winsFit Robot.png");
+            if (robotResource.exists()) {
+                helper.addInline("winsFitRobot", robotResource);
+            } else {
+                logger.warn("WinsFit Robot not found at: classpath:static/Images/winsFit Robot.png");
+            }
 
-        } catch (MessagingException e) {
-            logger.error("Error loading images for email: {}", e.getMessage());
+        } catch (Exception e) {
+            logger.error("Error loading email images: {}", e.getMessage());
         }
 
         mailSender.send(message);
@@ -115,7 +127,6 @@ public class EmailService {
 
         sendEmailFromTemplate(appointment.getVisitor().getEmail(), "Appointment Booking Confirmation", "bookingConfirmationEmailTemplate", context);
 
-        // ✅ Send email to the physiotherapist
         if (appointment.getMeetingType() == MeetingType.VIRTUAL && appointment.getUser() != null) {
             sendPhysiotherapistNotification(appointment);
         }
@@ -123,14 +134,14 @@ public class EmailService {
 
     public void sendPhysiotherapistNotification(Appointment appointment) {
         Context context = new Context();
-        context.setVariable("physiotherapistName", appointment.getUser().getUsername()); // ✅ FIXED
+        context.setVariable("physiotherapistName", appointment.getUser().getUsername());
         context.setVariable("visitorName", appointment.getVisitor().getVisitorname());
         context.setVariable("date", appointment.getDate().toString());
         context.setVariable("time", appointment.getTime().toString());
         context.setVariable("meetingLink", appointment.getVideoMeetingLink());
 
         sendEmailFromTemplate(
-                appointment.getUser().getEmail(), // ✅ FIXED
+                appointment.getUser().getEmail(),
                 "Virtual Appointment Assigned",
                 "physiotherapistEmailTemplate",
                 context
@@ -160,7 +171,6 @@ public class EmailService {
         context.setVariable("time", appointment.getTime().toString());
         context.setVariable("meetingLink", appointment.getVideoMeetingLink());
 
-        // ✅ Send email to visitor
         sendEmailFromTemplate(
                 appointment.getVisitor().getEmail(),
                 "Upcoming Appointment Reminder",
@@ -168,8 +178,7 @@ public class EmailService {
                 context
         );
 
-        // ✅ Send email to physiotherapist
-        if (appointment.getUser() != null) { // ✅ FIXED
+        if (appointment.getUser() != null) {
             context.setVariable("physiotherapistName", appointment.getUser().getUsername());
             sendEmailFromTemplate(
                     appointment.getUser().getEmail(),
