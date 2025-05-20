@@ -66,7 +66,7 @@ public class EmailService {
             } else {
                 logger.warn("WinsFit Robot not found at: classpath:static/Images/winsFit Robot.png");
             }
-
+//yes it works
         } catch (Exception e) {
             logger.error("Error loading email images: {}", e.getMessage());
         }
