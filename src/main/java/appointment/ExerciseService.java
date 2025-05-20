@@ -113,8 +113,8 @@ public class ExerciseService {
                 String experienceLevel = name.toLowerCase().contains("advanced") ? "advanced" :
                         (name.toLowerCase().contains("intermediate") ? "intermediate" : "beginner");
 
-                // Store path without /static prefix for consistency
-                String relativePath = "/Images/ExerciseVideos/" + file.getName();
+                // Update path to include /static prefix for proper serving
+                String relativePath = "/static/Images/ExerciseVideos/" + file.getName();
                 Exercise exercise = new Exercise(name, gender, experienceLevel, relativePath);
                 saveExercise(exercise);
             }

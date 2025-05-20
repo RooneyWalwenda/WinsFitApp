@@ -69,7 +69,7 @@ public class ExerciseController {
         return ResponseEntity.ok("Videos imported successfully");
     }
 
-    @GetMapping("/exercise/validate-videos")
+    @GetMapping("/validate-videos")
     public ResponseEntity<List<Map<String, Object>>> validateAllVideos() {
         return ResponseEntity.ok(exerciseService.validateAllVideos());
     }
