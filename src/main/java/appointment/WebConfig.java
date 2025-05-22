@@ -12,7 +12,7 @@ public class WebConfig implements WebMvcConfigurer {
     public void addCorsMappings(CorsRegistry registry) {
         registry.addMapping("/**")
                 .allowedOriginPatterns(
-                        "https://mrvisitease.com",
+                        "https://winstec.me",
                         "https://*.vercel.app",  // Now this will work
                         "http://localhost:[*]"  // For any localhost port
                 )
